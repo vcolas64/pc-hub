@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jeu 4e — Atomes & Molécules</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#0b1220;
+      --blue:#1f55ff;
+      --good:#2ecc71;
+      --bad:#e74c3c;
+      --panel2:#d6ecff;
+      --shadow: 0 8px 24px rgba(0,0,0,.15);
+      --fontTitle: "Comic Sans MS","Comic Sans","Trebuchet MS",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      --font: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+    .app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;overflow:hidden}
+
+    .bgmols{position:absolute;inset:0;opacity:.18;pointer-events:none}
+    .bgmols .mol{position:absolute;transform: rotate(var(--rot));filter: drop-shadow(0 8px 8px rgba(0,0,0,.08));}
+
+    .atom{
+      width:40px;height:40px;border-radius:50%;
+      border:2px solid rgba(0,0,0,.25);
+      box-shadow: 0 10px 16px rgba(0,0,0,.12);
+      flex: 0 0 auto;
+    }
+
+    .card{width:min(1020px,100%);background:transparent;border-radius:18px;padding:10px 10px 14px;position:relative}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 6px 8px;flex-wrap:wrap}
+    .titleWrap{display:flex;flex-direction:column;gap:4px;min-width:240px}
+    .title{font-family:var(--fontTitle);font-size:clamp(18px,2.4vw,26px);color:var(--blue);font-weight:800;letter-spacing:.2px;line-height:1.05}
+    .rgpdInline{
+      font-size:11px;
+      color:rgba(0,0,0,.55);
+      font-weight:700;
+      line-height:1.2;
+      user-select:none;
+    }
+
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+    select, button{
+      font-family:var(--font);font-size:14px;border-radius:12px;border:1px solid rgba(0,0,0,.18);
+      padding:10px 12px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.06)
+    }
+    button{cursor:pointer}
+    button:hover{transform:translateY(-1px)}
+    .lockMsg{
+      margin:0 6px 10px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:2px solid rgba(231,76,60,.45);
+      background: rgba(231,76,60,.10);
+      color:#9c2f24;
+      font-weight:800;
+      display:none;
+      box-shadow:0 6px 14px rgba(0,0,0,.08);
+    }
+
+    .stats{display:flex;gap:10px;flex-wrap:wrap;padding:0 6px 12px;color:rgba(0,0,0,.75);font-size:14px}
+    .pill{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.10);border-radius:999px;padding:8px 10px}
+    .pill b{color:rgba(0,0,0,.9)}
+
+    .scene{
+      background:rgba(255,255,255,.78);
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:18px 18px 14px;
+      position:relative;
+    }
+    .question{
+      font-family:var(--fontTitle);color:var(--blue);
+      font-size:clamp(18px,3.0vw,32px);font-weight:900;text-align:center;line-height:1.2;
+      margin:6px 0 14px;text-shadow:0 2px 0 rgba(255,255,255,.9)
+    }
+
+    .center{display:flex;justify-content:center;align-items:center;min-height:190px;margin:6px 0 6px;gap:18px;flex-wrap:wrap}
+
+    .methane{
+      position:relative;
+      --s:56px; --d:56px;
+      width: calc(var(--s) * 3);
+      height: calc(var(--s) * 3);
+      flex: 0 0 auto;
+    }
+    .methane.small{ --s:44px; --d:44px; width: calc(var(--s) * 3); height: calc(var(--s) * 3); }
+    .methane.mini{ --s:34px; --d:34px; width: calc(var(--s) * 3); height: calc(var(--s) * 3); }
+    .methane .a{position:absolute; width:var(--s); height:var(--s); border-radius:50%;}
+    .methane .centerC{left:50%;top:50%;transform:translate(-50%,-50%)}
+    .methane .topH{left:50%;top:calc(50% - var(--d));transform:translate(-50%,-50%)}
+    .methane .bottomH{left:50%;top:calc(50% + var(--d));transform:translate(-50%,-50%)}
+    .methane .leftH{left:calc(50% - var(--d));top:50%;transform:translate(-50%,-50%)}
+    .methane .rightH{left:calc(50% + var(--d));top:50%;transform:translate(-50%,-50%)}
+
+    .group{
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;
+      padding:6px 0;max-width: 100%;
+    }
+    .molItem{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:16px;
+      border:1px solid rgba(0,0,0,.10);
+      background:rgba(0,0,0,.03);
+      max-width: 100%;
+    }
+    .plusSign{
+      font-family:var(--fontTitle);
+      font-size:34px;font-weight:900;color:rgba(0,0,0,.45);
+      margin:0 6px;
+    }
+    .molStack{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:100%}
+    .molClone{display:flex;align-items:center;justify-content:center}
+    .molClone.atomClone{
+      padding:6px;
+      border-radius:16px;
+      background: rgba(255,255,255,.65);
+      border: 1px dashed rgba(0,0,0,.16);
+      box-shadow: 0 6px 12px rgba(0,0,0,.06);
+      margin: 2px 6px;
+    }
+
+    .molModel{display:flex;align-items:center;gap:0}
+    .molModel.big .atom{width:56px;height:56px}
+    .molModel.small .atom{width:44px;height:44px}
+    .molModel.mini .atom{width:34px;height:34px}
+
+    .rotatable{
+      display:inline-flex;
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 10px 12px rgba(0,0,0,.10));
+    }
+
+    .eqBox{display:flex;justify-content:center;margin-top:8px}
+    .equation{
+      background:var(--panel2);border-radius:10px;padding:10px 14px;
+      font-family:"Georgia","Times New Roman",serif;
+      font-size:clamp(22px,3.2vw,46px);font-weight:700;
+      display:flex;align-items:baseline;gap:14px;
+      box-shadow:0 8px 18px rgba(0,0,0,.12);
+      border:1px solid rgba(0,0,0,.10);
+      flex-wrap:wrap;justify-content:center;
+    }
+    .equation .term{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+    .equation .coef{font-size:1.05em}
+    .equation .formula{font-weight:900;letter-spacing:.5px}
+    .equation small{font-size:.6em;vertical-align:baseline;position:relative;top:.25em}
+    .plus{font-weight:900;padding:0 2px}
+
+    .answers{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    @media (max-width:700px){.answers{grid-template-columns:1fr}}
+    .ansBtn{
+      border-radius:14px;border:1px solid rgba(0,0,0,.14);
+      background:#fff;box-shadow:0 8px 16px rgba(0,0,0,.08);
+      padding:12px 12px;font-size:clamp(18px,2.0vw,24px);
+      font-weight:900;cursor:pointer;text-align:center;
+      display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+      min-height:72px;
+    }
+    .ansBtn.correct{outline:4px solid rgba(46,204,113,.35);border-color:rgba(46,204,113,.6)}
+    .ansBtn.wrong{outline:4px solid rgba(231,76,60,.25);border-color:rgba(231,76,60,.55)}
+
+    .inputRow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:10px}
+    input[type="number"]{
+      font-size:20px;font-weight:800;padding:10px 12px;width:140px;
+      border-radius:14px;border:2px solid rgba(0,0,0,.18);
+      box-shadow:0 6px 14px rgba(0,0,0,.08);
+      outline:none;text-align:center;
+    }
+    input[type="number"]:focus{border-color:rgba(31,85,255,.55)}
+    .checkBtn{font-weight:900;background:#fff}
+
+    .feedback{margin-top:10px;text-align:center;font-size:16px;min-height:22px;color:rgba(0,0,0,.75)}
+    .feedback.good{color:#1f7a3b;font-weight:800}
+    .feedback.bad{color:#9c2f24;font-weight:800}
+
+    .autoCorrect{
+      display:none;margin-top:12px;border-radius:16px;
+      border:3px solid rgba(231,76,60,.55);
+      background: rgba(231,76,60,.10);
+      box-shadow: 0 10px 18px rgba(0,0,0,.12);
+      padding:12px 14px;
+    }
+    .autoCorrect.show{display:block}
+    .autoCorrect .acTitle{
+      font-family:var(--fontTitle);
+      font-size:22px;font-weight:900;color:#9c2f24;text-align:center;margin-bottom:6px;
+    }
+    .autoCorrect .acBody{
+      font-size:15px;line-height:1.35;color:rgba(0,0,0,.82);text-align:center;
+    }
+    .autoCorrect .acBody b{color:rgba(0,0,0,.92)}
+    .autoCorrect .acBody small{font-size:.8em}
+
+    .nextBubble{
+      position:absolute;right:16px;bottom:14px;width:48px;height:48px;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #7dffb0, var(--good));
+      border:2px solid rgba(0,0,0,.18);
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      display:grid;place-items:center;cursor:pointer;user-select:none;
+    }
+    .nextBubble:active{transform:scale(.98)}
+    .triangle{
+      width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;
+      border-left:16px solid rgba(0,0,0,.55);margin-left:3px;
+    }
+    .tiny{color:rgba(0,0,0,.62);font-size:12px;text-align:center;margin-top:10px}
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <div class="bgmols" id="bgmols"></div>
+
+  <div class="card">
+    <div class="topbar">
+      <div class="titleWrap">
+        <div class="title">Jeu — Atomes & Molécules (4e)</div>
+        <div class="rgpdInline">Ce jeu ne collecte aucune donnée personnelle et ne nécessite aucune inscription</div>
+      </div>
+
+      <div class="controls">
+        <label style="display:flex;align-items:center;gap:8px">
+          Niveau :
+          <select id="level">
+            <option value="beginner">Débutant</option>
+            <option value="medium" selected>Moyen</option>
+            <option value="expert">Expert</option>
+          </select>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:8px">
+          Mode :
+          <select id="mode">
+            <option value="mix" selected>Mixte</option>
+            <option value="formulaToModel">Passer de la formule au modèle</option>
+            <option value="count">Compter des atomes</option>
+            <option value="atomOrMolecule">Atome ou molécule ?</option>
+          </select>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:8px">
+          Questions :
+          <select id="qmax">
+            <option>10</option>
+            <option>15</option>
+            <option>20</option>
+          </select>
+        </label>
+
+        <button id="start">Nouvelle partie</button>
+      </div>
+    </div>
+
+    <div class="lockMsg" id="lockMessage"></div>
+
+    <div class="stats">
+      <div class="pill">Question : <b id="qnum">0</b>/<b id="qmaxDisp">10</b></div>
+      <div class="pill">Score : <b id="score">0</b></div>
+      <div class="pill">Série : <b id="streak">0</b></div>
+    </div>
+
+    <div class="scene">
+      <div class="question" id="question">Clique sur “Nouvelle partie”.</div>
+
+      <div class="center" id="center"></div>
+
+      <div class="eqBox" id="eqBox" style="display:none">
+        <div class="equation" id="equation"></div>
+      </div>
+
+      <div class="answers" id="answers" style="display:none"></div>
+
+      <div class="inputRow" id="inputRow" style="display:none">
+        <input type="number" id="numInput" min="0" step="1" placeholder="?" />
+        <button class="checkBtn" id="check">Vérifier</button>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="autoCorrect" id="autoCorrect">
+        <div class="acTitle">CORRECTION (à lire !)</div>
+        <div class="acBody" id="autoCorrectBody"></div>
+      </div>
+
+      <div class="tiny">Raccourcis : <b>Entrée</b> = vérifier (compter), <b>→</b> = question suivante.</div>
+
+      <div class="nextBubble" id="nextBubble" title="Question suivante">
+        <div class="triangle"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ATOMS = {
+    H:  { name:"Hydrogène", color:"#ffffff", border:"rgba(0,0,0,.28)" },
+    O:  { name:"Oxygène",   color:"#ff1e1e", border:"rgba(0,0,0,.22)" },
+    C:  { name:"Carbone",   color:"#111111", border:"rgba(0,0,0,.22)" },
+    N:  { name:"Azote",     color:"#2f66ff", border:"rgba(0,0,0,.22)" },
+
+    Co: { name:"Cobalt",    color:"#7f8c8d", border:"rgba(0,0,0,.22)" },
+    Cl: { name:"Chlore",    color:"#2ecc71", border:"rgba(0,0,0,.22)" },
+    Ca: { name:"Calcium",   color:"#f39c12", border:"rgba(0,0,0,.22)" },
+  };
+
+  const MOLECULES = [
+    { key:"H2O", name:"Eau",               html:"H<small>2</small>O", counts:{H:2,O:1}, atoms:["H","O","H"] },
+    { key:"CO2", name:"Dioxyde de carbone",html:"CO<small>2</small>", counts:{C:1,O:2}, atoms:["O","C","O"] },
+    { key:"O2",  name:"Dioxygène",         html:"O<small>2</small>",  counts:{O:2},     atoms:["O","O"] },
+    { key:"H2",  name:"Dihydrogène",       html:"H<small>2</small>",  counts:{H:2},     atoms:["H","H"] },
+    { key:"N2",  name:"Diazote",           html:"N<small>2</small>",  counts:{N:2},     atoms:["N","N"] },
+    { key:"CH4", name:"Méthane",           html:"CH<small>4</small>", counts:{C:1,H:4}, atoms:["CH4_SPECIAL"] },
+    { key:"N2O", name:"Protoxyde d’azote", html:"N<small>2</small>O", counts:{N:2,O:1}, atoms:["N","N","O"] },
+  ];
+
+  const EXTRA_MOLECULES_ATOM_OR_MOL = [
+    { key:"CO", name:"Monoxyde de carbone", html:"CO", counts:{C:1,O:1}, atoms:["C","O"] }
+  ];
+
+  // Débutant : 3 ; Moyen : 10 ; Expert : 20
+  const LEVELS = {
+    beginner: {
+      ftm:   { multiProb: 0.55, terms: [1,2], coefMin: 1, coefMax: 3,  atomProb: 0.35 },
+      count: { terms: [2,2], coefMin: 1, coefMax: 3,  atomProb: 0.25 },
+      mix:   { ftmProb: 0.55, countProb: 0.35, aomProb: 0.10 }
+    },
+    medium: {
+      ftm:   { multiProb: 0.75, terms: [2,3], coefMin: 1, coefMax: 10, atomProb: 0.40 },
+      count: { terms: [2,3], coefMin: 1, coefMax: 10, atomProb: 0.30 },
+      mix:   { ftmProb: 0.50, countProb: 0.40, aomProb: 0.10 }
+    },
+    expert: {
+      ftm:   { multiProb: 0.85, terms: [3,4], coefMin: 1, coefMax: 20, atomProb: 0.45 },
+      count: { terms: [3,4], coefMin: 1, coefMax: 20, atomProb: 0.35 },
+      mix:   { ftmProb: 0.45, countProb: 0.45, aomProb: 0.10 }
+    }
+  };
+
+  // ✅ Déblocage expert INDEPENDANT par mode
+  const EXPERT_UNLOCK_PREFIX = "expertUnlockedByMode:";
+  const SCORE_TO_UNLOCK = 70;
+
+  const MODE_LABELS = {
+    mix: "Mixte",
+    formulaToModel: "Passer de la formule au modèle",
+    count: "Compter des atomes",
+    atomOrMolecule: "Atome ou molécule ?"
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const elMode = $("mode");
+  const elLevel = $("level");
+  const elQmax = $("qmax");
+  const elStart = $("start");
+  const elNextBubble = $("nextBubble");
+  const elLockMessage = $("lockMessage");
+
+  const elQnum = $("qnum");
+  const elQmaxDisp = $("qmaxDisp");
+  const elScore = $("score");
+  const elStreak = $("streak");
+
+  const elQuestion = $("question");
+  const elCenter = $("center");
+  const elEqBox = $("eqBox");
+  const elEquation = $("equation");
+  const elAnswers = $("answers");
+  const elInputRow = $("inputRow");
+  const elNumInput = $("numInput");
+  const elCheck = $("check");
+  const elFeedback = $("feedback");
+
+  const elCorrectionBox = $("autoCorrect");
+  const elCorrectionBody = $("autoCorrectBody");
+
+  let qMax = 10, qNum = 0, score = 0, streak = 0;
+  let running = false, locked = false;
+  let current = null;
+
+  // ✅ On fige le mode/niveau au démarrage de la partie
+  let gameMode = "mix";
+  let gameLevel = "medium";
+
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  };
+  const pickOne = (arr) => arr[Math.floor(Math.random()*arr.length)];
+  const randInt = (min, max) => Math.floor(Math.random()*(max-min+1))+min;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+  function modeLabel(mode){ return MODE_LABELS[mode] || mode; }
+
+  function unlockKeyFor(mode){ return EXPERT_UNLOCK_PREFIX + mode; }
+  function expertUnlockedFor(mode){
+    return localStorage.getItem(unlockKeyFor(mode)) === "true";
+  }
+  function setExpertUnlockedFor(mode){
+    localStorage.setItem(unlockKeyFor(mode), "true");
+  }
+
+  function byMolKey(k){
+    return [...MOLECULES, ...EXTRA_MOLECULES_ATOM_OR_MOL].find(m => m.key === k);
+  }
+
+  function updateExpertLockUI(){
+    const mode = elMode.value;
+    const expertOpt = [...elLevel.options].find(o => o.value === "expert");
+    const unlocked = expertUnlockedFor(mode);
+
+    if (unlocked){
+      expertOpt.disabled = false;
+      expertOpt.textContent = "Expert";
+      elLockMessage.style.display = "none";
+      elLockMessage.textContent = "";
+    } else {
+      expertOpt.disabled = true;
+      expertOpt.textContent = "🔒 Expert";
+      elLockMessage.style.display = "block";
+      elLockMessage.innerHTML =
+        `🔒 Le niveau expert du mode <b>${modeLabel(mode)}</b> se débloque après avoir <b>terminé</b> le niveau <b>Moyen</b> avec au moins <b>${SCORE_TO_UNLOCK}%</b>.`;
+      if (elLevel.value === "expert") elLevel.value = "medium";
+    }
+  }
+
+  function levelCfg(){
+    return LEVELS[gameLevel] || LEVELS.medium;
+  }
+
+  function setStats(){
+    elQnum.textContent = String(qNum);
+    elQmaxDisp.textContent = String(qMax);
+    elScore.textContent = String(score);
+    elStreak.textContent = String(streak);
+  }
+
+  function hideCorrection(){
+    elCorrectionBox.classList.remove("show");
+    elCorrectionBody.innerHTML = "";
+  }
+
+  function resetUI(){
+    elCenter.innerHTML = "";
+    elEquation.innerHTML = "";
+    elAnswers.innerHTML = "";
+    elFeedback.textContent = "";
+    elFeedback.className = "feedback";
+    elEqBox.style.display = "none";
+    elAnswers.style.display = "none";
+    elInputRow.style.display = "none";
+    elNumInput.value = "";
+    hideCorrection();
+  }
+
+  function setFeedback(text, ok){
+    elFeedback.textContent = text;
+    elFeedback.className = "feedback " + (ok ? "good" : "bad");
+  }
+
+  function showCorrection(html){
+    elCorrectionBody.innerHTML = html;
+    elCorrectionBox.classList.add("show");
+  }
+
+  function finish(){
+    running = false;
+    locked = true;
+
+    const pct = Math.round((score/qMax)*100);
+
+    resetUI();
+    elQuestion.textContent = `Terminé ! Score : ${score}/${qMax} (${pct}%)`;
+
+    // ✅ Déblocage expert selon le MODE de la partie (indépendant)
+    if (gameLevel === "medium" && pct >= SCORE_TO_UNLOCK){
+      if (!expertUnlockedFor(gameMode)){
+        setExpertUnlockedFor(gameMode);
+      }
+      updateExpertLockUI();
+      setFeedback(`🎉 Bravo ! Tu as débloqué le niveau Expert pour le mode “${modeLabel(gameMode)}” !`, true);
+    } else if (gameLevel === "medium" && !expertUnlockedFor(gameMode)){
+      setFeedback(`Pour débloquer Expert dans “${modeLabel(gameMode)}” : termine le niveau Moyen avec au moins ${SCORE_TO_UNLOCK}%.`, false);
+      updateExpertLockUI();
+    } else {
+      setFeedback("Tu peux relancer une partie ou changer de mode/niveau.", true);
+      updateExpertLockUI();
+    }
+  }
+
+  // ===== Visual helpers =====
+  function makeAtom(sym){
+    const data = ATOMS[sym];
+    const a = document.createElement("div");
+    a.className = "atom";
+    a.style.background = data ? data.color : "#ddd";
+    a.style.borderColor = data ? data.border : "rgba(0,0,0,.22)";
+    return a;
+  }
+
+  function randBetween(min, max){ return min + Math.random() * (max - min); }
+  function rotationRangeForSize(size){
+    if (size === "big") return 10;
+    if (size === "small") return 18;
+    return 22;
+  }
+  function wrapRotated(node, size){
+    const r = rotationRangeForSize(size);
+    const angle = randBetween(-r, r);
+    const wrap = document.createElement("div");
+    wrap.className = "rotatable";
+    wrap.style.transform = `rotate(${angle}deg)`;
+    wrap.appendChild(node);
+    return wrap;
+  }
+
+  function renderMethane(size){
+    const wrap = document.createElement("div");
+    wrap.className = "methane " + (size === "mini" ? "mini" : size === "small" ? "small" : "");
+    const C = makeAtom("C"); C.classList.add("a","centerC"); wrap.appendChild(C);
+    const Ht = makeAtom("H"); Ht.classList.add("a","topH"); wrap.appendChild(Ht);
+    const Hb = makeAtom("H"); Hb.classList.add("a","bottomH"); wrap.appendChild(Hb);
+    const Hl = makeAtom("H"); Hl.classList.add("a","leftH"); wrap.appendChild(Hl);
+    const Hr = makeAtom("H"); Hr.classList.add("a","rightH"); wrap.appendChild(Hr);
+    wrap.querySelectorAll(".atom").forEach(a => { a.style.width="var(--s)"; a.style.height="var(--s)"; });
+    return wrap;
+  }
+
+  function renderMolModel(molKey, size){
+    const m = byMolKey(molKey);
+    if (m.key === "CH4"){
+      const div = document.createElement("div");
+      div.className = "molModel " + size;
+      div.appendChild(renderMethane(size));
+      return wrapRotated(div, size);
+    }
+    const atoms = m.atoms;
+    const row = document.createElement("div");
+    row.className = "molModel " + size;
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "0px";
+    atoms.forEach(sym => row.appendChild(makeAtom(sym)));
+    return wrapRotated(row, size);
+  }
+
+  function renderAtomModel(sym, size){
+    const row = document.createElement("div");
+    row.className = "molModel " + size;
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "0px";
+    row.appendChild(makeAtom(sym));
+    return wrapRotated(row, size);
+  }
+
+  function chooseRepeatSize(totalUnits){
+    if (totalUnits >= 10) return "mini";
+    if (totalUnits >= 6) return "small";
+    return "small";
+  }
+
+  function deOrD(sym){
+    const map = { H: "d’hydrogène", O: "d’oxygène", N: "d’azote", C: "de carbone" };
+    return map[sym] || ("de " + sym);
+  }
+
+  // ===== Term structure =====
+  const BASE_ATOMS_FOR_MAIN_MODES = ["H","O","C","N"];
+
+  function termToHTML(t){
+    const coef = (t.coef === 1) ? "" : `<span class="coef">${t.coef}</span>`;
+    const space = (t.coef === 1) ? "" : " ";
+    const body = (t.kind === "atom")
+      ? `<span class="formula">${t.sym}</span>`
+      : `<span class="formula">${byMolKey(t.key).html}</span>`;
+    return `${coef}${space}${body}`;
+  }
+
+  function formatExpressionHTML(terms){
+    return terms.map((t, i) => {
+      const plus = (i < terms.length-1) ? `<span class="plus"> + </span>` : "";
+      return termToHTML(t) + plus;
+    }).join("");
+  }
+
+  function formatTermForEquation(t){
+    const term = document.createElement("span");
+    term.className = "term";
+    if (t.coef !== 1){
+      const c = document.createElement("span");
+      c.className = "coef";
+      c.textContent = String(t.coef);
+      term.appendChild(c);
+    }
+    const f = document.createElement("span");
+    f.className = "formula";
+    if (t.kind === "atom") f.textContent = t.sym;
+    else f.innerHTML = byMolKey(t.key).html;
+    term.appendChild(f);
+    return term;
+  }
+
+  function renderMultiModels(terms){
+    const wrap = document.createElement("div");
+    wrap.className = "group";
+
+    const totalUnits = terms.reduce((s,t)=>s+t.coef,0);
+    const size = chooseRepeatSize(totalUnits);
+
+    terms.forEach((t, i) => {
+      const item = document.createElement("div");
+      item.className = "molItem";
+
+      const stack = document.createElement("div");
+      stack.className = "molStack";
+
+      for (let n = 0; n < t.coef; n++){
+        const clone = document.createElement("div");
+        clone.className = "molClone" + (t.kind === "atom" ? " atomClone" : "");
+        if (t.kind === "atom") clone.appendChild(renderAtomModel(t.sym, size));
+        else clone.appendChild(renderMolModel(t.key, size));
+        stack.appendChild(clone);
+      }
+
+      item.appendChild(stack);
+      wrap.appendChild(item);
+
+      if (i < terms.length - 1){
+        const plus = document.createElement("div");
+        plus.className = "plusSign";
+        plus.textContent = "+";
+        wrap.appendChild(plus);
+      }
+    });
+
+    return wrap;
+  }
+
+  // ===== Question selection =====
+  function pickQuestionType(){
+    const mode = gameMode;
+    const cfg = levelCfg().mix;
+
+    if (mode === "formulaToModel") return "formulaToModel";
+    if (mode === "count") return "count";
+    if (mode === "atomOrMolecule") return "atomOrMolecule";
+
+    // mixte
+    const r = Math.random();
+    if (r < cfg.ftmProb) return "formulaToModel";
+    if (r < cfg.ftmProb + cfg.countProb) return "count";
+    return "atomOrMolecule";
+  }
+
+  // ===== Mode: Passer de la formule au modèle =====
+  function buildFormulaToModel(){
+    const cfg = levelCfg().ftm;
+
+    const nTerms = randInt(cfg.terms[0], cfg.terms[1]);
+    const makeTerm = () => {
+      const isAtom = Math.random() < cfg.atomProb;
+      if (isAtom){
+        return { kind:"atom", sym: pickOne(BASE_ATOMS_FOR_MAIN_MODES), coef: randInt(cfg.coefMin, cfg.coefMax) };
+      }
+      const mol = pickOne(MOLECULES);
+      return { kind:"molecule", key: mol.key, coef: randInt(cfg.coefMin, cfg.coefMax) };
+    };
+
+    const terms = [];
+    const used = new Set();
+    while (terms.length < nTerms){
+      const t = makeTerm();
+      const id = (t.kind==="atom" ? "A:"+t.sym : "M:"+t.key);
+      if (!used.has(id) || terms.length === 0){
+        used.add(id);
+        terms.push(t);
+      }
+    }
+
+    if (terms.length === 1 && Math.random() < cfg.multiProb){
+      const extra = makeTerm();
+      terms.push(extra);
+    }
+
+    const correctExprHTML = formatExpressionHTML(terms);
+    current = { type:"formulaToModel", terms, correctExprHTML };
+
+    elQuestion.textContent = "Choisis la modélisation qui correspond à cette formule :";
+    elEqBox.style.display = "flex";
+    elEquation.innerHTML = correctExprHTML;
+
+    const options = [];
+    const usedOpt = new Set();
+
+    function pushOption(termsOpt){
+      const key = JSON.stringify(termsOpt.map(t => ({
+        k:t.kind, s:t.sym||"", m:t.key||"", c:t.coef
+      })));
+      if (usedOpt.has(key)) return false;
+      usedOpt.add(key);
+      options.push(termsOpt);
+      return true;
+    }
+
+    pushOption(terms);
+
+    { // tweak coef
+      const t = terms.map(x => ({...x}));
+      const i = randInt(0, t.length-1);
+      t[i].coef = clamp(t[i].coef + (Math.random()<0.5 ? 1 : -1), 1, cfg.coefMax);
+      pushOption(t);
+    }
+    { // swap symbol/key
+      const t = terms.map(x => ({...x}));
+      const i = randInt(0, t.length-1);
+      if (t[i].kind === "atom"){
+        const other = pickOne(BASE_ATOMS_FOR_MAIN_MODES.filter(a => a !== t[i].sym));
+        t[i].sym = other;
+      } else {
+        const otherMol = pickOne(MOLECULES.filter(m => m.key !== t[i].key));
+        t[i].key = otherMol.key;
+      }
+      pushOption(t);
+    }
+    { // change kind
+      const t = terms.map(x => ({...x}));
+      const i = randInt(0, t.length-1);
+      if (t[i].kind === "atom"){
+        const otherMol = pickOne(MOLECULES);
+        t[i] = { kind:"molecule", key: otherMol.key, coef: clamp(t[i].coef, 1, cfg.coefMax) };
+      } else {
+        const otherA = pickOne(BASE_ATOMS_FOR_MAIN_MODES);
+        t[i] = { kind:"atom", sym: otherA, coef: clamp(t[i].coef, 1, cfg.coefMax) };
+      }
+      pushOption(t);
+    }
+
+    while (options.length < 4){
+      const t = terms.map(x => ({...x}));
+      const i = randInt(0, t.length-1);
+      t[i].coef = randInt(1, cfg.coefMax);
+      pushOption(t);
+      if (usedOpt.size > 50) break;
+    }
+
+    const shuffled = shuffle(options).slice(0,4);
+    current.options = shuffled;
+
+    elAnswers.style.display = "grid";
+    elAnswers.innerHTML = "";
+    shuffled.forEach((termsOpt) => {
+      const btn = document.createElement("button");
+      btn.className = "ansBtn";
+      btn.appendChild(renderMultiModels(termsOpt));
+      btn.addEventListener("click", () => answerFormulaToModel(termsOpt, btn));
+      elAnswers.appendChild(btn);
+    });
+
+    setFeedback("Lis la formule, puis choisis le bon “paquet” de modèles.", true);
+  }
+
+  function sameTerms(a, b){
+    if (a.length !== b.length) return false;
+    for (let i=0;i<a.length;i++){
+      const x=a[i], y=b[i];
+      if (x.kind!==y.kind) return false;
+      if (x.coef!==y.coef) return false;
+      if (x.kind==="atom" && x.sym!==y.sym) return false;
+      if (x.kind==="molecule" && x.key!==y.key) return false;
+    }
+    return true;
+  }
+
+  function answerFormulaToModel(termsChoice, btn){
+    if (!running || locked) return;
+    locked = true;
+
+    [...elAnswers.querySelectorAll(".ansBtn")].forEach(b => {
+      const idx = [...elAnswers.children].indexOf(b);
+      const optTerms = current.options[idx];
+      if (sameTerms(optTerms, current.terms)) b.classList.add("correct");
+    });
+
+    if (sameTerms(termsChoice, current.terms)){
+      score += 1; streak += 1;
+      btn.classList.add("correct");
+      setFeedback("Bravo ✅ C’est la bonne modélisation.", true);
+    } else {
+      streak = 0;
+      btn.classList.add("wrong");
+      setFeedback("Non ❌ Regarde la correction juste en dessous.", false);
+
+      showCorrection(
+        `✅ <b>Formule correcte :</b> ${current.correctExprHTML}<br><br>
+         <small>Astuce : le nombre devant (ex : 2H) indique combien de fois on répète l’atome ou la molécule.</small>`
+      );
+    }
+    setStats();
+  }
+
+  // ===== Mode: Compter des atomes =====
+  function buildCountQuestion(){
+    const cfg = levelCfg().count;
+
+    const nTerms = randInt(cfg.terms[0], cfg.terms[1]);
+    const terms = [];
+    const used = new Set();
+
+    function makeTerm(){
+      const isAtom = Math.random() < cfg.atomProb;
+      if (isAtom){
+        return { kind:"atom", sym: pickOne(BASE_ATOMS_FOR_MAIN_MODES), coef: randInt(cfg.coefMin, cfg.coefMax) };
+      }
+      const mol = pickOne(MOLECULES);
+      return { kind:"molecule", key: mol.key, coef: randInt(cfg.coefMin, cfg.coefMax) };
+    }
+
+    while (terms.length < nTerms){
+      const t = makeTerm();
+      const id = (t.kind==="atom" ? "A:"+t.sym : "M:"+t.key);
+      if (!used.has(id) || terms.length === 0){
+        used.add(id);
+        terms.push(t);
+      }
+    }
+
+    const present = new Set();
+    for (const t of terms){
+      if (t.kind === "atom") present.add(t.sym);
+      else Object.keys(byMolKey(t.key).counts).forEach(e => present.add(e));
+    }
+    const element = pickOne([...present]);
+
+    let correct = 0;
+    for (const t of terms){
+      if (t.kind === "atom"){
+        correct += (t.sym === element ? t.coef : 0);
+      } else {
+        const m = byMolKey(t.key);
+        correct += t.coef * (m.counts[element] || 0);
+      }
+    }
+
+    current = { type:"count", terms, element, correct };
+
+    elQuestion.textContent = `Combien y a-t-il d'atomes ${deOrD(element)} ?`;
+
+    elEqBox.style.display = "flex";
+    elEquation.innerHTML = "";
+
+    terms.forEach((t, i) => {
+      elEquation.appendChild(formatTermForEquation(t));
+      if (i < terms.length - 1){
+        const plus = document.createElement("span");
+        plus.className = "plus";
+        plus.textContent = "+";
+        elEquation.appendChild(plus);
+      }
+    });
+
+    elInputRow.style.display = "flex";
+    elNumInput.value = "";
+    elNumInput.focus();
+
+    setFeedback("Écris le nombre total d’atomes, puis clique sur “Vérifier”.", true);
+  }
+
+  function checkCountAnswer(){
+    if (!running || locked) return;
+    const val = elNumInput.value.trim();
+    if (val === "") return;
+
+    const n = Number(val);
+    if (!Number.isFinite(n) || n < 0){
+      setFeedback("Entre un nombre valide.", false);
+      return;
+    }
+
+    locked = true;
+    if (n === current.correct){
+      score += 1; streak += 1;
+      setFeedback(`Bravo ✅ Il y a bien ${current.correct} atomes ${deOrD(current.element)}.`, true);
+    } else {
+      streak = 0;
+      setFeedback("Non ❌ Regarde la correction juste en dessous.", false);
+
+      const steps = current.terms.map(t => {
+        if (t.kind === "atom"){
+          const per = (t.sym === current.element) ? 1 : 0;
+          return `• ${t.coef} × (${per} atome ${deOrD(current.element)} dans ${t.sym}) = <b>${t.coef*per}</b>`;
+        } else {
+          const mol = byMolKey(t.key);
+          const perMol = mol.counts[current.element] || 0;
+          return `• ${t.coef} × (${perMol} atome(s) ${deOrD(current.element)} dans ${mol.html}) = <b>${t.coef*perMol}</b>`;
+        }
+      }).join("<br>");
+
+      showCorrection(
+        `✅ <b>Réponse :</b> ${current.correct}<br><br>
+         <b>Correction (calcul) :</b><br>
+         ${steps}<br>
+         <b>Total</b> = ${current.correct}`
+      );
+    }
+    setStats();
+  }
+
+  // ===== Mode: Atome ou molécule ? =====
+  function buildAtomOrMolecule(){
+    const atomPool = ["H","O","C","N","Co","Cl","Ca"];
+    const molPool = [...MOLECULES.map(m=>m.key), ...EXTRA_MOLECULES_ATOM_OR_MOL.map(m=>m.key)];
+
+    const isAtom = Math.random() < 0.5;
+    const showAsModel = Math.random() < 0.55;
+
+    let item;
+    if (isAtom){
+      item = { kind:"atom", sym: pickOne(atomPool) };
+    } else {
+      item = { kind:"molecule", key: pickOne(molPool) };
+    }
+
+    current = { type:"atomOrMolecule", correct: isAtom ? "atom" : "molecule", item };
+
+    elQuestion.textContent = "Atome ou molécule ?";
+
+    if (showAsModel){
+      elCenter.appendChild(
+        item.kind === "atom"
+          ? renderAtomModel(item.sym, "big")
+          : renderMolModel(item.key, "big")
+      );
+      elEqBox.style.display = "none";
+    } else {
+      elEqBox.style.display = "flex";
+      elEquation.innerHTML = (item.kind === "atom")
+        ? `<span class="formula">${item.sym}</span>`
+        : `<span class="formula">${byMolKey(item.key).html}</span>`;
+    }
+
+    elAnswers.style.display = "grid";
+    elAnswers.innerHTML = "";
+
+    const btnAtom = document.createElement("button");
+    btnAtom.className = "ansBtn";
+    btnAtom.textContent = "Atome";
+    btnAtom.addEventListener("click", () => answerAtomOrMolecule("atom", btnAtom));
+
+    const btnMol = document.createElement("button");
+    btnMol.className = "ansBtn";
+    btnMol.textContent = "Molécule";
+    btnMol.addEventListener("click", () => answerAtomOrMolecule("molecule", btnMol));
+
+    elAnswers.appendChild(btnAtom);
+    elAnswers.appendChild(btnMol);
+
+    setFeedback("Choisis : atome (1 seule boule) ou molécule (plusieurs boules).", true);
+  }
+
+  function answerAtomOrMolecule(choice, btn){
+    if (!running || locked) return;
+    locked = true;
+
+    [...elAnswers.querySelectorAll(".ansBtn")].forEach(b => {
+      if (b.textContent.toLowerCase() === current.correct) b.classList.add("correct");
+    });
+
+    if (choice === current.correct){
+      score += 1; streak += 1;
+      btn.classList.add("correct");
+      setFeedback("Bravo ✅", true);
+    } else {
+      streak = 0;
+      btn.classList.add("wrong");
+      setFeedback("Non ❌ Regarde la correction juste en dessous.", false);
+
+      const label = current.correct === "atom" ? "Atome" : "Molécule";
+      const why = current.correct === "atom"
+        ? "Un atome est représenté par <b>une seule boule</b> (ou un seul symbole)."
+        : "Une molécule est un assemblage de <b>plusieurs atomes</b> (ou une formule comme H₂O, CO…).";
+
+      showCorrection(`✅ <b>Réponse :</b> ${label}<br>${why}`);
+    }
+    setStats();
+  }
+
+  // ===== Flow =====
+  function nextQuestion(){
+    if (!running) return;
+    if (qNum >= qMax){ finish(); return; }
+
+    qNum += 1;
+    locked = false;
+    resetUI();
+
+    const type = pickQuestionType();
+    if (type === "formulaToModel") buildFormulaToModel();
+    else if (type === "count") buildCountQuestion();
+    else buildAtomOrMolecule();
+
+    setStats();
+  }
+
+  function startGame(){
+    // fige mode/niveau pour cette partie
+    gameMode = elMode.value;
+    gameLevel = elLevel.value;
+
+    // sécurité : si expert est choisi mais verrouillé dans CE mode => repasse en moyen
+    if (gameLevel === "expert" && !expertUnlockedFor(gameMode)){
+      gameLevel = "medium";
+      elLevel.value = "medium";
+      setFeedback(`🔒 Expert est verrouillé dans “${modeLabel(gameMode)}” : fais d’abord le niveau Moyen (≥ ${SCORE_TO_UNLOCK}%).`, false);
+    }
+
+    updateExpertLockUI();
+
+    qMax = Number(elQmax.value);
+    qNum = 0; score = 0; streak = 0;
+    running = true;
+    locked = false;
+    setStats();
+    nextQuestion();
+  }
+
+  // ===== Decorative background =====
+  function buildBackground(){
+    const bg = document.getElementById("bgmols");
+    const samples = ["H2O","CO2","O2","H2","N2","CH4","N2O"];
+    const coords = [
+      [6,10, -12],[70,8, 8],[18,42, 15],[82,38,-10],[10,78, 12],[55,72,-8],[88,76, 10],
+      [40,18, 6],[32,88,-6],[62,52, 12]
+    ];
+    coords.forEach(([x,y,rot], i) => {
+      const k = samples[i % samples.length];
+      const wrap = document.createElement("div");
+      wrap.className = "mol";
+      wrap.style.left = x + "%";
+      wrap.style.top = y + "%";
+      wrap.style.setProperty("--rot", rot + "deg");
+
+      const model = renderMolModel(k, "mini");
+      model.style.transform = `scale(.9) ${model.style.transform || ""}`.trim();
+
+      wrap.appendChild(model);
+      bg.appendChild(wrap);
+    });
+  }
+
+  // Events
+  elStart.addEventListener("click", startGame);
+  elNextBubble.addEventListener("click", nextQuestion);
+  elCheck.addEventListener("click", checkCountAnswer);
+
+  // ✅ Quand on change de mode, on met à jour le verrouillage expert selon CE mode
+  elMode.addEventListener("change", () => {
+    updateExpertLockUI();
+    // si l'utilisateur avait "expert" sélectionné mais que ce mode est verrouillé
+    if (elLevel.value === "expert" && !expertUnlockedFor(elMode.value)){
+      elLevel.value = "medium";
+      setFeedback(`🔒 Expert est verrouillé dans “${modeLabel(elMode.value)}”.`, false);
+    }
+  });
+
+  elLevel.addEventListener("change", () => {
+    if (elLevel.value === "expert" && !expertUnlockedFor(elMode.value)){
+      elLevel.value = "medium";
+      updateExpertLockUI();
+      setFeedback(`🔒 Expert est verrouillé dans “${modeLabel(elMode.value)}” : fais d’abord le niveau Moyen (≥ ${SCORE_TO_UNLOCK}%).`, false);
+    } else {
+      updateExpertLockUI();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") nextQuestion();
+    if (e.key === "Enter"){
+      if (current?.type === "count" && !locked) checkCountAnswer();
+    }
+  });
+
+  buildBackground();
+  updateExpertLockUI();
+  setStats();
+})();
+</script>
+</body>
+</html>
