@@ -4,20 +4,69 @@
   <meta charset="UTF-8">
   <title>Jeux pédagogiques</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #2c3e50;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    a.button {
+      display: block;
+      padding: 20px;
+      background: #27ae60;
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 18px;
+    }
+
+    a.button:hover {
+      background: #1e8449;
+    }
+
+    .retour {
+      margin-top: 30px;
+      font-size: 16px;
+    }
+
+    .retour a {
+      text-decoration: none;
+      color: #3498db;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; padding:20px;">
 
-<h2>🎮 Jeux pédagogiques</h2>
+<body>
 
-<ul>
-  <li>
-    <a href="jeu_molécules.html">Jeux pédagogiques</a>
-      4° - Jeu n°1 – Atomes et molécules
+  <h1>🎮 Jeux pédagogiques</h1>
+  <p>Choisis un jeu pour réviser ou t’entraîner.</p>
+
+  <div class="container">
+  
+    <a class="button" href="#">
+      🧪 Jeu 1 - Atomes et molécules
     </a>
-  </li>
-</ul>
+  </div>
 
-<p><a href="index.html">⬅ Retour à l’accueil</a></p>
+  <div class="retour">
+    <a href="index.html">⬅ Retour à l’accueil</a>
+  </div>
 
 </body>
 </html>
