@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Jeux pédagogiques</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial; padding:20px;">
+
+<h2>🎮 Jeux pédagogiques</h2>
+
+<ul>
+  <li>
+    <a href="jeu_molécules.html">Jeux pédagogiques</a>
+      4° - Jeu n°1 – Atomes et molécules
+    </a>
+  </li>
+</ul>
+
+<p><a href="index.html">⬅ Retour à l’accueil</a></p>
+
+</body>
+</html>
